@@ -26,9 +26,8 @@ public class PlayerController : MonoBehaviour
         //direction = Quaternion.Euler(0f, Camera.main.transform.eulerAngles.y, 0f) * direction;
         transform.Translate(direction * speed * Time.deltaTime);
 
-        cameraPos = new Vector3(this.transform.position.x, cameraPos.y, this.transform.position.z) + new Vector3(-3f, 0f, -6f);
+        cameraPos = new Vector3(this.transform.position.x, cameraPos.y, this.transform.position.z) + new Vector3(3.0f, 0f, -4.25f);
         Camera.main.transform.position = cameraPos;
-
         //bulletSpawn.position = this.transform.position + new Vector3(0f, 0f, 0.75f);
 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);

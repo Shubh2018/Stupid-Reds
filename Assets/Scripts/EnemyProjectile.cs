@@ -10,5 +10,15 @@ public class EnemyProjectile : MonoBehaviour
     void Update()
     {
         transform.Translate(speed * Vector3.forward * Time.deltaTime);
+        Destroy(this.gameObject, 5.0f);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if(collision.gameObject.CompareTag("Player"))
+        {
+            collision.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+            Destroy(collision.gameObject.GetComponent<PlayerController>());
+        }
     }
 }

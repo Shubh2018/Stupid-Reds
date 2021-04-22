@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,5 +18,12 @@ public class GameEnvironment : MonoBehaviour
         {
             waypoint.GetComponent<MeshRenderer>().enabled = false;
         }
+    }
+
+    public event Action<int> onShoot;
+    public void OnShoot(int id)
+    {
+        if (onShoot != null)
+            onShoot(id);
     }
 }

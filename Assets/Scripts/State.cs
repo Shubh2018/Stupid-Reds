@@ -25,6 +25,7 @@ public class State
     protected float visDist = 10.0f;
     protected float visAngle = 30.0f;
     protected float shootDist = 7.0f;
+    protected float shootAngle = 10.0f;
 
     public State(GameObject _npc, NavMeshAgent _agent, Transform _player)
     {
@@ -49,6 +50,33 @@ public class State
         }
 
         return this;
+    }
+
+    protected bool CanSeePlayer()
+    {
+        Vector3 direction = player.position - npc.transform.position;
+        float angle = Vector3.Angle(direction, npc.transform.forward);
+
+        if (angle < visAngle)
+            return true;
+        else
+            return false;
+    }
+
+    protected bool CanShootPlayer()
+    {
+        Vector3 direction = player.position - npc.transform.position;
+        float angle = Vector3.Angle(direction, npc.transform.forward);
+
+        if (angle < shootAngle)
+            return true;
+        else
+            return false;
+    }
+
+    protected void FacePlayer()
+    {
+        npc.transform.LookAt(player.position);
     }
 }
 
@@ -104,12 +132,15 @@ public class Patrol : State
             if (currentIndex >= GameEnvironment.instance.wayPoints.Count - 1)
                 currentIndex = 0;
             else
+            {
+                currentIndex = Random.Range(0, GameEnvironment.instance.wayPoints.Count);
                 currentIndex++;
+            }
 
             agent.SetDestination(GameEnvironment.instance.wayPoints[currentIndex].transform.position);
         }
 
-        if(Vector3.Distance(npc.transform.position, player.position) <= visDist)
+        if(Vector3.Distance(npc.transform.position, player.position) <= visDist && CanSeePlayer())
         {
             nextState = new Pursue(npc, agent, player);
             stage = EVENT.EXIT;
@@ -139,7 +170,8 @@ public class Pursue : State
 
     public override void Update()
     {
-        agent.SetDestination(player.position + new Vector3(0f, 5f, 0f));
+        agent.SetDestination(player.position);
+        agent.stoppingDistance = 4.0f;
 
         if(Vector3.Distance(npc.transform.position, player.position) > visDist)
         {
@@ -147,7 +179,7 @@ public class Pursue : State
             stage = EVENT.EXIT;
         }
 
-        if (Vector3.Distance(npc.transform.position, player.position) <= shootDist)
+        if (Vector3.Distance(npc.transform.position, player.position) <= shootDist && CanShootPlayer())
         {
             nextState = new Shoot(npc, agent, player);
             stage = EVENT.EXIT;
@@ -162,8 +194,6 @@ public class Pursue : State
 
 public class Shoot : State
 {
-    EnemyAttackLogic attackLogic = GameObject.FindObjectOfType<EnemyAttackLogic>();
-
     public Shoot(GameObject _npc, NavMeshAgent _agent, Transform _player) : base(_npc, _agent, _player)
     {
         name = STATE.ATTACK;
@@ -176,8 +206,8 @@ public class Shoot : State
 
     public override void Update()
     {
-        attackLogic.Shoot();
-
+        FacePlayer();
+        
         if (Vector3.Distance(npc.transform.position, player.position) > shootDist)
         {
             nextState = new Pursue(npc, agent, player);

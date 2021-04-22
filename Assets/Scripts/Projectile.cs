@@ -11,6 +11,8 @@ public class Projectile : MonoBehaviour
     private LayerMask env;
     [SerializeField]
     private float maxDistance = 3.0f;
+    [SerializeField]
+    private ParticleSystem bloodFX;
 
     void Update()
     {
@@ -34,7 +36,7 @@ public class Projectile : MonoBehaviour
         if(collision.gameObject.CompareTag("Enemy"))
         {
             Destroy(collision.gameObject.GetComponent<AI>());
-            Destroy(collision.gameObject.GetComponent<EnemyAttackLogic>());
+            Destroy(collision.gameObject.GetComponent<Enemy>());
             Destroy(collision.gameObject.GetComponent<NavMeshAgent>());
         }
     }
