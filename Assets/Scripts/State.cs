@@ -21,14 +21,16 @@ public class State
     protected Transform player;
     protected State nextState;
     protected NavMeshAgent agent;
+    protected GameObject[] wayPoints;
 
-    protected float visDist = 10.0f;
-    protected float visAngle = 30.0f;
+    protected float visDist = 3.5f;
+    protected float visAngle = 45.0f;
     protected float shootDist = 7.0f;
     protected float shootAngle = 10.0f;
 
-    public State(GameObject _npc, NavMeshAgent _agent, Transform _player)
+    public State(GameObject _npc, NavMeshAgent _agent, Transform _player, GameObject[] _wayPoints)
     {
+        wayPoints = _wayPoints;
         npc = _npc;
         agent = _agent;
         player = _player;
@@ -82,7 +84,7 @@ public class State
 
 public class Idle : State
 {
-    public Idle(GameObject _npc, NavMeshAgent _agent, Transform _player) : base(_npc, _agent, _player)
+    public Idle(GameObject _npc, NavMeshAgent _agent, Transform _player, GameObject[] _wayPoints) : base(_npc, _agent, _player, _wayPoints)
     {
         name = STATE.IDLE;
     }
@@ -96,7 +98,7 @@ public class Idle : State
     {
         if(Random.Range(0, 100) < 10)
         {
-            nextState = new Patrol(npc, agent, player);
+            nextState = new Patrol(npc, agent, player, wayPoints);
             stage = EVENT.EXIT;
         }
         //base.Update();
@@ -112,10 +114,10 @@ public class Patrol : State
 {
     int currentIndex = -1;
 
-    public Patrol(GameObject _npc, NavMeshAgent _agent, Transform _player) : base(_npc, _agent, _player)
+    public Patrol(GameObject _npc, NavMeshAgent _agent, Transform _player, GameObject[] _wayPoints) : base(_npc, _agent, _player, _wayPoints)
     {
         name = STATE.PATROL;
-        agent.speed = 2;
+        agent.speed = 4;
         agent.isStopped = false;
     }
 
@@ -127,22 +129,15 @@ public class Patrol : State
 
     public override void Update()
     {
-        if(agent.remainingDistance < 1)
+        if (agent.remainingDistance < 1)
         {
-            if (currentIndex >= GameEnvironment.instance.wayPoints.Count - 1)
-                currentIndex = 0;
-            else
-            {
-                currentIndex = Random.Range(0, GameEnvironment.instance.wayPoints.Count);
-                currentIndex++;
-            }
-
-            agent.SetDestination(GameEnvironment.instance.wayPoints[currentIndex].transform.position);
+            currentIndex = Random.Range(0, wayPoints.Length);
+            agent.SetDestination(wayPoints[currentIndex].transform.position);
         }
 
         if(Vector3.Distance(npc.transform.position, player.position) <= visDist && CanSeePlayer())
         {
-            nextState = new Pursue(npc, agent, player);
+            nextState = new Pursue(npc, agent, player, wayPoints);
             stage = EVENT.EXIT;
         }
         //base.Update();
@@ -156,11 +151,12 @@ public class Patrol : State
 
 public class Pursue : State
 {
-    public Pursue(GameObject _npc, NavMeshAgent _agent, Transform _player) : base(_npc, _agent, _player)
+    public Pursue(GameObject _npc, NavMeshAgent _agent, Transform _player, GameObject[] _wayPoints) : base(_npc, _agent, _player, _wayPoints)
     {
         name = STATE.PURSUE;
-        agent.speed = 4;
+        agent.speed = 5;
         agent.isStopped = false;
+        agent.stoppingDistance = 2.0f;
     }
 
     public override void Enter()
@@ -171,17 +167,17 @@ public class Pursue : State
     public override void Update()
     {
         agent.SetDestination(player.position);
-        agent.stoppingDistance = 4.0f;
 
         if(Vector3.Distance(npc.transform.position, player.position) > visDist)
         {
-            nextState = new Patrol(npc, agent, player);
+            agent.SetDestination(wayPoints[Random.Range(0, wayPoints.Length)].transform.position);
+            nextState = new Patrol(npc, agent, player, wayPoints);
             stage = EVENT.EXIT;
         }
 
         if (Vector3.Distance(npc.transform.position, player.position) <= shootDist && CanShootPlayer())
         {
-            nextState = new Shoot(npc, agent, player);
+            nextState = new Attack(npc, agent, player, wayPoints);
             stage = EVENT.EXIT;
         }
     }
@@ -192,9 +188,9 @@ public class Pursue : State
     }
 }
 
-public class Shoot : State
+public class Attack : State
 {
-    public Shoot(GameObject _npc, NavMeshAgent _agent, Transform _player) : base(_npc, _agent, _player)
+    public Attack(GameObject _npc, NavMeshAgent _agent, Transform _player, GameObject[] _wayPoints) : base(_npc, _agent, _player, _wayPoints)
     {
         name = STATE.ATTACK;
     }
@@ -210,7 +206,7 @@ public class Shoot : State
         
         if (Vector3.Distance(npc.transform.position, player.position) > shootDist)
         {
-            nextState = new Pursue(npc, agent, player);
+            nextState = new Pursue(npc, agent, player, wayPoints);
             stage = EVENT.EXIT;
         }
     }

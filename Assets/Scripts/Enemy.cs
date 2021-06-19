@@ -33,5 +33,6 @@ public class Enemy : MonoBehaviour
     private void OnDestroy()
     {
         GameEnvironment.instance.onShoot -= Shoot;
+        GameEnvironment.instance.enemies.Remove(this);
     }
 }
